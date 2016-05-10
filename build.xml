@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Build slack plugin" default="packaging">
+    <property name="dir.target.jar" value="./out" />
+    <property name="dir.classes" value="./bin" />
+
+    <property name="jar-codec-file" value="./lib/commons-codec-1.9.jar"/>
+    <property name="jar-logging-file" value="./lib/commons-logging-1.2.jar"/>
+    <property name="jar-gson-file" value="./lib/gson-2.6.2.jar"/>
+    <property name="jar-httpclient-file" value="./lib/httpclient-4.5.2.jar"/>
+    <property name="jar-httpcore-file" value="./lib/httpcore-4.4.4.jar"/>
+
+    <target name="packaging">
+        <mkdir dir="${dir.target.jar}" />
+        <jar destfile="${dir.target.jar}/scouter-plugin-server-alert-slack.jar">
+            <fileset dir="${dir.classes}"/>
+        </jar>
+    	<copy file="${jar-codec-file}" todir="${dir.target.jar}" verbose="true"/>
+    	<copy file="${jar-logging-file}" todir="${dir.target.jar}" verbose="true"/>
+        <copy file="${jar-gson-file}" todir="${dir.target.jar}" verbose="true"/>
+        <copy file="${jar-httpclient-file}" todir="${dir.target.jar}" verbose="true"/>
+        <copy file="${jar-httpcore-file}" todir="${dir.target.jar}" verbose="true"/>
+    </target>
+</project>
