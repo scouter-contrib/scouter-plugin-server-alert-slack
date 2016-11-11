@@ -21,7 +21,9 @@
 * **_ext\_plugin\_slack\_botName_** : bot name
 * **_ext\_plugin\_slack\_icon\_emoji_** : Slack 이모티콘 이름 (icon url 보다 우선순위 )
 * **_ext\_plugin\_slack\_icon\_url_** : icon 이미지 URL
-
+* **_ext\_plugin\_elapsed\_time_threshold_** : 응답시간의 임계치 (ms) - 기본 값은 0으로, 0일때 응답시간의 임계치 초과 여부를 확인하지 않는다.
+* **_ext\_plugin\_gc\_time_threshold_** : GC Time의 임계치 (ms) - 기본 값은 0으로, 0일때 GC Time의 임계치 초과 여부를 확인하지 않는다.
+* **_ext\_plugin\_thread\_count_threshold_** : Thread Count의 임계치 - 기본 값은 0으로, 0일때 Thread Count의 임계치 초과 여부를 확인하지 않는다.
 
 
 * Example
@@ -35,6 +37,10 @@ ext_plugin_slack_channel=#scouter
 ext_plugin_slack_botName=scouter
 ext_plugin_slack_icon_emoji=:computer:
 ext_plugin_slack_icon_url=http://XXX.XXX.XXX/XXX.gif
+
+ext_plugin_elapsed_time_threshold=5000
+ext_plugin_gc_time_threshold=5000
+ext_plugin_thread_count_threshold=300
 ```
 
 ### Dependencies
