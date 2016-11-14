@@ -164,7 +164,7 @@ public class SlackPlugin {
 
                 HttpPost post = new HttpPost(webhookURL);
                 post.addHeader("Content-Type","application/json");
-								// encoding utf-8
+								// charset set utf-8
 								post.setEntity(new StringEntity(payload, "utf-8"));
 
                 CloseableHttpClient client = HttpClientBuilder.create().build();
