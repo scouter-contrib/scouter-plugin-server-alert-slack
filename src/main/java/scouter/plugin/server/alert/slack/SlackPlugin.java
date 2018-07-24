@@ -62,12 +62,17 @@ import scouter.util.HashUtil;
  * @author Se-Wang Lee(ssamzie101@gmail.com) on 2016. 5. 2.
  */
 public class SlackPlugin {
+	
 	final Configure conf = Configure.getInstance();
-
+	
+	private final MonitoringGroupConfigure groupConf;
+	
     private static AtomicInteger ai = new AtomicInteger(0);
     private static List<Integer> javaeeObjHashList = new ArrayList<Integer>();
 
     public SlackPlugin() {
+    	groupConf = new MonitoringGroupConfigure(conf);
+    	
     	if (ai.incrementAndGet() == 1) {
 	    	ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
@@ -84,7 +89,7 @@ public class SlackPlugin {
 
 								mapPack = AgentCall.call(objectPack, RequestCmd.OBJECT_THREAD_LIST, mapPack);
 
-				        		int threadCountThreshold = conf.getInt("ext_plugin_thread_count_threshold", 0);
+				        		int threadCountThreshold = groupConf.getInt("ext_plugin_thread_count_threshold", objectPack.objType, 0);
 				        		int threadCount = mapPack.getList("name").size();
 
 				        		if (threadCountThreshold != 0 && threadCount > threadCountThreshold) {
@@ -112,19 +117,19 @@ public class SlackPlugin {
 
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_ALERT)
 	public void alert(final AlertPack pack){
-		if (conf.getBoolean("ext_plugin_slack_send_alert", false)) {
+		if (groupConf.getBoolean("ext_plugin_slack_send_alert", pack.objType, false)) {
 
-			int level = conf.getInt("ext_plugin_slack_level", 0);
+			int level = groupConf.getInt("ext_plugin_slack_level", pack.objType, 0);
 			// Get log level (0 : INFO, 1 : WARN, 2 : ERROR, 3 : FATAL)
 			if(level <= pack.level){
 				new Thread(){
 					public void run(){
 						try{
-							String webhookURL = conf.getValue("ext_plugin_slack_webhook_url");
-							String channel = conf.getValue("ext_plugin_slack_channel");
-							String botName = conf.getValue("ext_plugin_slack_botName");
-							String iconURL = conf.getValue("ext_plugin_slack_icon_url");
-							String iconEmoji = conf.getValue("ext_plugin_slack_icon_emoji");
+							String webhookURL = groupConf.getValue("ext_plugin_slack_webhook_url", pack.objType);
+							String channel = groupConf.getValue("ext_plugin_slack_channel", pack.objType);
+							String botName = groupConf.getValue("ext_plugin_slack_botName", pack.objType);
+							String iconURL = groupConf.getValue("ext_plugin_slack_icon_url", pack.objType);
+							String iconEmoji = groupConf.getValue("ext_plugin_slack_icon_emoji", pack.objType);
 
 							assert webhookURL != null;
 
@@ -157,7 +162,7 @@ public class SlackPlugin {
                 Message message = new Message(contents, channel, botName, iconURL, iconEmoji);
                 String payload = new Gson().toJson(message);
 
-                if(conf.getBoolean("ext_plugin_slack_debug", false)){
+                if(groupConf.getBoolean("ext_plugin_slack_debug", pack.objType, false)){
                 	println("WebHookURL : "+webhookURL);
                 	println("param : "+payload);
                 }
@@ -187,11 +192,12 @@ public class SlackPlugin {
             	}
 						}
 					}
+
 				}.start();
 			}
 		}
 	}
-
+	
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_OBJECT)
 	public void object(ObjectPack pack){
 		if (pack.version != null && pack.version.length() > 0) {
@@ -232,7 +238,10 @@ public class SlackPlugin {
 
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_XLOG)
 	public void xlog(XLogPack pack) {
-		if (conf.getBoolean("ext_plugin_slack_xlog_enabled", true)) {
+		
+		String objType = AgentManager.getAgent(pack.objHash).objType;
+		
+		if ( groupConf.getBoolean("ext_plugin_slack_xlog_enabled", objType, true)) {
 			if (pack.error != 0) {
 				String date = DateUtil.yyyymmdd(pack.endTime);
 				String service = TextRD.getString(date, TextTypes.SERVICE, pack.service);
@@ -242,13 +251,13 @@ public class SlackPlugin {
 				ap.title = "xlog Error";
 				ap.message = service + " - " + TextRD.getString(date, TextTypes.ERROR, pack.error);
 				ap.time = System.currentTimeMillis();
-				ap.objType = "scouter";
+				ap.objType = objType;
 				alert(ap);
 			}
 
 			try {
-					int elapsedThreshold = conf.getInt("ext_plugin_elapsed_time_threshold", 0);
-
+					int elapsedThreshold = groupConf.getInt("ext_plugin_elapsed_time_threshold", objType, 0);
+					
 					if (elapsedThreshold != 0 && pack.elapsed > elapsedThreshold) {
 						String serviceName = TextRD.getString(DateUtil.yyyymmdd(pack.endTime), TextTypes.SERVICE, pack.service);
 
@@ -261,7 +270,7 @@ public class SlackPlugin {
 											+ pack.service + "(" + serviceName + ") "
 											+ "elapsed time(" + pack.elapsed + " ms) exceed a threshold.";
 							ap.time = System.currentTimeMillis();
-							ap.objType = AgentManager.getAgent(pack.objHash).objType;
+							ap.objType = objType;
 
 							alert(ap);
 					}
@@ -272,7 +281,8 @@ public class SlackPlugin {
 		}
 	}
 
-  @ServerPlugin(PluginConstants.PLUGIN_SERVER_COUNTER)
+
+@ServerPlugin(PluginConstants.PLUGIN_SERVER_COUNTER)
   public void counter(PerfCounterPack pack) {
       String objName = pack.objName;
       int objHash = HashUtil.hash(objName);
@@ -296,7 +306,7 @@ public class SlackPlugin {
         	}
 
         	if (pack.timetype == TimeTypeEnum.REALTIME) {
-        		long gcTimeThreshold = conf.getLong("ext_plugin_gc_time_threshold", 0);
+        		long gcTimeThreshold = groupConf.getLong("ext_plugin_gc_time_threshold", objType, 0);
         		long gcTime = pack.data.getLong(CounterConstants.JAVA_GC_TIME);
 
         		if (gcTimeThreshold != 0 && gcTime > gcTimeThreshold) {
