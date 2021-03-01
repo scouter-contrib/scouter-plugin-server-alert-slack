@@ -18,13 +18,7 @@
  */
 package scouter.plugin.server.alert.slack;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
@@ -32,9 +26,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-
-import com.google.gson.Gson;
-
 import scouter.lang.AlertLevel;
 import scouter.lang.TextTypes;
 import scouter.lang.TimeTypeEnum;
@@ -55,6 +46,13 @@ import scouter.server.db.TextRD;
 import scouter.server.netio.AgentCall;
 import scouter.util.DateUtil;
 import scouter.util.HashUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Scouter server plugin to send alert via Slack
@@ -80,6 +78,9 @@ public class SlackPlugin {
 	    	executor.scheduleAtFixedRate(new Runnable() {
 				@Override
 				public void run() {
+					if (conf.getInt("ext_plugin_thread_count_threshold", 0) == 0) {
+						return;
+					}
 					for (int objHash : javaeeObjHashList) {
 						try {
 							if (AgentManager.isActive(objHash)) {
@@ -118,7 +119,6 @@ public class SlackPlugin {
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_ALERT)
 	public void alert(final AlertPack pack){
 		if (groupConf.getBoolean("ext_plugin_slack_send_alert", pack.objType, false)) {
-
 			int level = groupConf.getInt("ext_plugin_slack_level", pack.objType, 0);
 			// Get log level (0 : INFO, 1 : WARN, 2 : ERROR, 3 : FATAL)
 			if(level <= pack.level){
@@ -200,6 +200,10 @@ public class SlackPlugin {
 	
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_OBJECT)
 	public void object(ObjectPack pack){
+		if (!conf.getBoolean("ext_plugin_slack_object_alert_enabled", false)) {
+			return;
+		}
+
 		if (pack.version != null && pack.version.length() > 0) {
 			AlertPack ap = null;
 			ObjectPack op = AgentManager.getAgent(pack.objHash);
@@ -238,10 +242,12 @@ public class SlackPlugin {
 
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_XLOG)
 	public void xlog(XLogPack pack) {
-		
+		if (!conf.getBoolean("ext_plugin_slack_xlog_enabled", false)) {
+			return;
+		}
+
 		String objType = AgentManager.getAgent(pack.objHash).objType;
-		
-		if ( groupConf.getBoolean("ext_plugin_slack_xlog_enabled", objType, true)) {
+		if (groupConf.getBoolean("ext_plugin_slack_xlog_enabled", objType, true)) {
 			if (pack.error != 0) {
 				String date = DateUtil.yyyymmdd(pack.endTime);
 				String service = TextRD.getString(date, TextTypes.SERVICE, pack.service);

@@ -24,8 +24,9 @@
 * **_ext\_plugin\_elapsed\_time\_threshold_** : 응답시간의 임계치 (ms) - 기본 값은 0으로, 0일때 응답시간의 임계치 초과 여부를 확인하지 않는다.
 * **_ext\_plugin\_gc\_time\_threshold_** : GC Time의 임계치 (ms) - 기본 값은 0으로, 0일때 GC Time의 임계치 초과 여부를 확인하지 않는다.
 * **_ext\_plugin\_thread\_count\_threshold_** : Thread Count의 임계치 - 기본 값은 0으로, 0일때 Thread Count의 임계치 초과 여부를 확인하지 않는다.
-* **_ext\_plugin\_slack\_xlog\_enabled_** : xlog maasege send (true / false) - default : false
-
+* **_ext\_plugin\_slack\_xlog\_enabled_** : xlog message send (true / false) - default : false
+* **_ext_plugin_slack_object_alert_enabled_** : object active/dead alert (true / false) - default : false
+  
 * Example
 ```
 # External Interface (Slack)
@@ -38,6 +39,7 @@ ext_plugin_slack_botName=scouter
 ext_plugin_slack_icon_emoji=:computer:
 ext_plugin_slack_icon_url=http://XXX.XXX.XXX/XXX.gif
 ext_plugin_slack_xlog_enabled=true
+ext_plugin_slack_object_alert_enabled=true
 
 ext_plugin_elapsed_time_threshold=5000
 ext_plugin_gc_time_threshold=5000
