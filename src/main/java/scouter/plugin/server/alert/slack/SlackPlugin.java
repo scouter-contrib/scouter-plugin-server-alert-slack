@@ -288,7 +288,7 @@ public class SlackPlugin {
 	}
 
 
-@ServerPlugin(PluginConstants.PLUGIN_SERVER_COUNTER)
+	@ServerPlugin(PluginConstants.PLUGIN_SERVER_COUNTER)
   public void counter(PerfCounterPack pack) {
       String objName = pack.objName;
       int objHash = HashUtil.hash(objName);
@@ -327,8 +327,23 @@ public class SlackPlugin {
 
     		        alert(ap);
         		}
+
+		        long activeServiceThreshold = groupConf.getLong("ext_plugin_active_service_threshold", objType, 0);
+		        long activeService = pack.data.getLong(CounterConstants.WAS_ACTIVE_SERVICE);
+
+		        if(activeService != 0 && activeService > activeServiceThreshold) {
+			        AlertPack ap = new AlertPack();
+			        ap.level = AlertLevel.WARN;
+			        ap.objHash = objHash;
+			        ap.title = "ActiveService exceed a threshold.";
+			        ap.message = objName + "'s ActiveService count( " + activeService + " ) exceed a threshold.";
+			        ap.time = System.currentTimeMillis();
+			        ap.objType = objType;
+			        alert(ap);
+		        }
+
         	}
-    	}
+    	  }
       } catch (Exception e) {
 		Logger.printStackTrace(e);
       }
