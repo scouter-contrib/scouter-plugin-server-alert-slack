@@ -88,6 +88,7 @@ public class SlackPlugin {
 								MapPack mapPack = new MapPack();
 				            	mapPack.put("objHash", objHash);
 
+
 								mapPack = AgentCall.call(objectPack, RequestCmd.OBJECT_THREAD_LIST, mapPack);
 
 				        		int threadCountThreshold = groupConf.getInt("ext_plugin_thread_count_threshold", objectPack.objType, 0);
@@ -113,6 +114,43 @@ public class SlackPlugin {
 				}
 	    	},
 	    	0, 5, TimeUnit.SECONDS);
+
+		    executor.scheduleAtFixedRate(new Runnable() {
+           @Override
+           public void run() {
+             if (conf.getInt("ext_plugin_active_service_threshold", 0) == 0) {
+               return;
+             }
+             for (int objHash : javaeeObjHashList) {
+               try {
+                 if (AgentManager.isActive(objHash)) {
+                   ObjectPack objectPack = AgentManager.getAgent(objHash);
+                   MapPack mapPack = new MapPack();
+                   mapPack.put("objHash", objHash);
+
+                   mapPack = AgentCall.call(objectPack, RequestCmd.OBJECT_ACTIVE_SERVICE_LIST, mapPack);
+
+                   int activeServiceThreshold = groupConf.getInt("ext_plugin_active_service_threshold", objectPack.objType, 0);
+                   int activeServiceCount = mapPack.getList("service").size();
+
+                   if(activeServiceCount != 0 && activeServiceCount > activeServiceThreshold) {
+                     AlertPack ap = new AlertPack();
+                     ap.level = AlertLevel.WARN;
+                     ap.objHash = objHash;
+                     ap.title = "ActiveService exceed a threshold.";
+                     ap.message = objectPack.objName + "'s ActiveService count( " + activeServiceCount + " ) exceed a threshold.";
+                     ap.time = System.currentTimeMillis();
+                     ap.objType = objectPack.objType;
+                     alert(ap);
+                   }
+                 }
+               } catch (Exception e) {
+                 // ignore
+               }
+             }
+           }
+         },
+				    0, 5, TimeUnit.SECONDS);
     	}
 	}
 
@@ -327,21 +365,6 @@ public class SlackPlugin {
 
     		        alert(ap);
         		}
-
-		        long activeServiceThreshold = groupConf.getLong("ext_plugin_active_service_threshold", objType, 0);
-		        long activeService = pack.data.getLong(CounterConstants.WAS_ACTIVE_SERVICE);
-
-		        if(activeService != 0 && activeService > activeServiceThreshold) {
-			        AlertPack ap = new AlertPack();
-			        ap.level = AlertLevel.WARN;
-			        ap.objHash = objHash;
-			        ap.title = "ActiveService exceed a threshold.";
-			        ap.message = objName + "'s ActiveService count( " + activeService + " ) exceed a threshold.";
-			        ap.time = System.currentTimeMillis();
-			        ap.objType = objType;
-			        alert(ap);
-		        }
-
         	}
     	  }
       } catch (Exception e) {
