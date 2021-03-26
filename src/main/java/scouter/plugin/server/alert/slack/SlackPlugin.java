@@ -116,41 +116,40 @@ public class SlackPlugin {
 	    	0, 5, TimeUnit.SECONDS);
 
 		    executor.scheduleAtFixedRate(new Runnable() {
-           @Override
-           public void run() {
-             if (conf.getInt("ext_plugin_active_service_threshold", 0) == 0) {
-               return;
-             }
-             for (int objHash : javaeeObjHashList) {
-               try {
-                 if (AgentManager.isActive(objHash)) {
-                   ObjectPack objectPack = AgentManager.getAgent(objHash);
-                   MapPack mapPack = new MapPack();
-                   mapPack.put("objHash", objHash);
+			    @Override
+			    public void run() {
+				    if (conf.getInt("ext_plugin_active_service_threshold", 0) == 0) {
+					    return;
+				    }
+				    for (int objHash : javaeeObjHashList) {
+					    try {
+						    if (AgentManager.isActive(objHash)) {
+							    ObjectPack objectPack = AgentManager.getAgent(objHash);
+							    MapPack mapPack = new MapPack();
+							    mapPack.put("objHash", objHash);
 
-                   mapPack = AgentCall.call(objectPack, RequestCmd.OBJECT_ACTIVE_SERVICE_LIST, mapPack);
+							    mapPack = AgentCall.call(objectPack, RequestCmd.OBJECT_ACTIVE_SERVICE_LIST, mapPack);
 
-                   int activeServiceThreshold = groupConf.getInt("ext_plugin_active_service_threshold", objectPack.objType, 0);
-                   int activeServiceCount = mapPack.getList("service").size();
+							    int activeServiceThreshold = groupConf.getInt("ext_plugin_active_service_threshold", objectPack.objType, 0);
+							    int activeServiceCount = mapPack.getList("service").size();
 
-                   if(activeServiceCount != 0 && activeServiceCount > activeServiceThreshold) {
-                     AlertPack ap = new AlertPack();
-                     ap.level = AlertLevel.WARN;
-                     ap.objHash = objHash;
-                     ap.title = "ActiveService exceed a threshold.";
-                     ap.message = objectPack.objName + "'s ActiveService count( " + activeServiceCount + " ) exceed a threshold.";
-                     ap.time = System.currentTimeMillis();
-                     ap.objType = objectPack.objType;
-                     alert(ap);
-                   }
-                 }
-               } catch (Exception e) {
-                 // ignore
-               }
-             }
-           }
-         },
-				    0, 5, TimeUnit.SECONDS);
+							    if(activeServiceCount != 0 && activeServiceCount > activeServiceThreshold) {
+								    AlertPack ap = new AlertPack();
+								    ap.level = AlertLevel.WARN;
+								    ap.objHash = objHash;
+								    ap.title = "ActiveService exceed a threshold.";
+								    ap.message = objectPack.objName + "'s ActiveService count( " + activeServiceCount + " ) exceed a threshold.";
+								    ap.time = System.currentTimeMillis();
+								    ap.objType = objectPack.objType;
+								    alert(ap);
+							    }
+						    }
+					    } catch (Exception e) {
+						    // ignore
+					    }
+				    }
+			    }
+		    },0, 5, TimeUnit.SECONDS);
     	}
 	}
 
@@ -235,7 +234,7 @@ public class SlackPlugin {
 			}
 		}
 	}
-	
+
 	@ServerPlugin(PluginConstants.PLUGIN_SERVER_OBJECT)
 	public void object(ObjectPack pack){
 		if (!conf.getBoolean("ext_plugin_slack_object_alert_enabled", false)) {
@@ -301,7 +300,7 @@ public class SlackPlugin {
 
 			try {
 					int elapsedThreshold = groupConf.getInt("ext_plugin_elapsed_time_threshold", objType, 0);
-					
+
 					if (elapsedThreshold != 0 && pack.elapsed > elapsedThreshold) {
 						String serviceName = TextRD.getString(DateUtil.yyyymmdd(pack.endTime), TextTypes.SERVICE, pack.service);
 
@@ -326,7 +325,7 @@ public class SlackPlugin {
 	}
 
 
-	@ServerPlugin(PluginConstants.PLUGIN_SERVER_COUNTER)
+@ServerPlugin(PluginConstants.PLUGIN_SERVER_COUNTER)
   public void counter(PerfCounterPack pack) {
       String objName = pack.objName;
       int objHash = HashUtil.hash(objName);
@@ -366,7 +365,7 @@ public class SlackPlugin {
     		        alert(ap);
         		}
         	}
-    	  }
+    	}
       } catch (Exception e) {
 		Logger.printStackTrace(e);
       }
