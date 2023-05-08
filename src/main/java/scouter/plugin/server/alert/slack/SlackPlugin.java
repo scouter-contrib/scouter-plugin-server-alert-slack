@@ -67,6 +67,8 @@ public class SlackPlugin {
 	
     private static AtomicInteger ai = new AtomicInteger(0);
     private static List<Integer> javaeeObjHashList = new ArrayList<Integer>();
+	private static AlertPack lastPack;
+	private static long lastSentTimestamp;
 
     public SlackPlugin() {
     	groupConf = new MonitoringGroupConfigure(conf);
@@ -152,7 +154,51 @@ public class SlackPlugin {
                 	msg = pack.message.substring(0, pack.message.indexOf("OBJECT") - 1);
                 }
 
-            	// Make message contents
+				try {
+					String ignoreNamePattern = conf.getValue("ext_plugin_ignore_name_patterns");
+					String ignoreTitlePattern = conf.getValue("ext_plugin_ignore_title_patterns");
+					String ignoreMessagePattern = conf.getValue("ext_plugin_ignore_message_patterns");
+
+					if (ignoreNamePattern != null && !"".equals(ignoreNamePattern)) {
+						for (String pattern : ignoreNamePattern.split(",")) {
+							if (name.matches(pattern.replaceAll("\\*", ".*"))) {
+								return;
+							}
+						}
+					}
+
+					if (ignoreTitlePattern != null && !"".equals(ignoreTitlePattern)) {
+						for (String pattern : ignoreTitlePattern.split(",")) {
+							if (title.matches(pattern.replaceAll("\\*", ".*"))) {
+								return;
+							}
+						}
+					}
+
+					if (ignoreMessagePattern != null && !"".equals(ignoreMessagePattern)) {
+						for (String pattern : ignoreMessagePattern.split(",")) {
+							if (msg.matches(pattern.replaceAll("\\*", ".*")
+									.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)")
+									.replaceAll("\\[", "\\\\[").replaceAll("\\]", "\\\\]"))) {
+								return;
+							}
+						}
+					}
+
+					if (conf.getBoolean("ext_plugin_ignore_continuous_dup_alert", false) && lastPack != null) {
+						long diff = System.currentTimeMillis() - lastSentTimestamp;
+						if (lastPack.objHash == pack.objHash && lastPack.title.equals(pack.title) && diff < DateUtil.MILLIS_PER_HOUR) {
+							return;
+						}
+					}
+
+					lastPack = pack;
+				} catch (Exception e) {
+					// ignore
+					println("[Error] : " + e.getMessage());
+				}
+
+				// Make message contents
                 String contents = "[TYPE] : " + pack.objType.toUpperCase() + "\n" +
                                	  "[NAME] : " + name + "\n" +
                                   "[LEVEL] : " + AlertLevel.getName(pack.level) + "\n" +
@@ -191,7 +237,7 @@ public class SlackPlugin {
                     e.printStackTrace();
             	}
 						}
-					}
+				}
 
 				}.start();
 			}

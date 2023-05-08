@@ -26,7 +26,10 @@
 * **_ext\_plugin\_thread\_count\_threshold_** : Thread Count의 임계치 - 기본 값은 0으로, 0일때 Thread Count의 임계치 초과 여부를 확인하지 않는다.
 * **_ext\_plugin\_slack\_xlog\_enabled_** : xlog message send (true / false) - default : false
 * **_ext_plugin_slack_object_alert_enabled_** : object active/dead alert (true / false) - default : false
-  
+* **_ext\_plugin\_ignore\_name_patterns_** : Alert 메시지 발송에서 제외할 NAME 패턴 목록 (',' 구분자 사용, * (wildcard) 사용 가능)
+* **_ext\_plugin\_ignore\_title_patterns_** : Alert 메시지 발송에서 제외할 TITLE 패턴 목록 (',' 구분자 사용, * (wildcard) 사용 가능)
+* **_ext\_plugin\_ignore\_message_patterns_** : Alert 메시지 발송에서 제외할 MESSAGE 패턴 목록 (',' 구분자 사용, * (wildcard) 사용 가능)
+
 * Example
 ```
 # External Interface (Slack)
@@ -44,6 +47,10 @@ ext_plugin_slack_object_alert_enabled=true
 ext_plugin_elapsed_time_threshold=5000
 ext_plugin_gc_time_threshold=5000
 ext_plugin_thread_count_threshold=300
+
+ext_plugin_ignore_name_patterns=myTomcat1
+ext_plugin_ignore_title_patterns=Elapsed,CONNECTION,activat*
+ext_plugin_ignore_message_patterns=*(/v1/common/user/testuser)*
 ```
 
 ### Dependencies
